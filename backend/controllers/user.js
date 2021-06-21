@@ -5,8 +5,13 @@ const User = require('../models/user');
 
 // Pour l'enregistrement de nouveaux utilisateurs
 exports.signup = (req, res, next) => {
-    // D'abord, hashez le mot de passe
-    bcrypt.hash(req.body.password, 10)
+    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    
+    if (!regex.test(req.body.password)) {
+        res.status(400).json("Le mot de passe doit comporter au moins 6 caractères dont au moins un chiffre")
+    } else {
+        // Hasher le mot de passe
+        bcrypt.hash(req.body.password, 10)
         .then(hash => {
             // Prend le mot de passe crypté et créé un nouvel utilisateur avec email et mot de passe
             const user = new User({
@@ -15,10 +20,12 @@ exports.signup = (req, res, next) => {
             });
             // Enregistre l'utilisateur dans la base de donnée
             user.save()
+                .then(console.log(user))
                 .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
                 .catch(error => res.status(400).json({ "message erreur" : error.message }))
         })
         .catch(error => res.status(500).json({ "message erreur" : error.message }));
+    } 
 };
 
 // Pour connecter les utilisateurs existants

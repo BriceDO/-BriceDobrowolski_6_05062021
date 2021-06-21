@@ -30,17 +30,18 @@ exports.likeAction = (req, res, next) => {
 
             // Modification de la sauce avant de la mettre à jour dans la base de données
             // Empêcher le user de liker et de disliker plusieurs fois
-            if (sauce.userLiked.includes(req.body.userId)){
-                console.log('Vous avez déjà liké cette sauce');  
-            }
 
             if(req.body.like == 1){
+                // On regarde si l'user est déjà présent dans le tableau
 
-                // On regarde si l'user est présent dans le tableau
+                positionDisliked = sauce.userDisliked.indexOf(req.body.userId);
+                sauce.userDisliked.splice(positionDisliked, 1);
+
                 if (sauce.userLiked.includes(req.body.userId)){
                     console.log('Vous avez déjà liké cette sauce');  
+
                 } else {
-                    // Si like = 1, on ajoute le user dans le tableau userLiked
+                // Si like = 1, on ajoute le user dans le tableau userLiked
                     sauce.userLiked.push(req.body.userId);
                 }
 
@@ -53,11 +54,15 @@ exports.likeAction = (req, res, next) => {
                 sauce.userDisliked.splice(positionDisliked, 1);
 
             } else if (req.body.like == -1){
-                // On regarde si l'user est présent dans le tableau
+                // On regarde si l'user est déjà présent dans le tableau
+
+                positionLiked = sauce.userLiked.indexOf(req.body.userId);
+                sauce.userLiked.splice(positionLiked, 1); 
                 if (sauce.userDisliked.includes(req.body.userId)){
-                    console.log('Vous avez déjà disliké cette sauce');  
+                    console.log('Vous avez déjà disliké cette sauce'); 
+
                 } else {
-                    // Si dislike = -1, on ajoute le user dans le tableau userDisliked
+                    // Si dislike = 1, on ajoute le user dans le tableau userDisliked
                     sauce.userDisliked.push(req.body.userId);
                 };
             }

@@ -1,12 +1,21 @@
 const mongoose = require('mongoose');
+const { isEmail } = require('validator');
 
-/* Dans notre schéma, la valeur "unique", avec l'élément mongoose-unique-validator passé comme plug-in,
+/* Dans le schéma, la valeur "unique", avec l'élément mongoose-unique-validator passé comme plug-in,
    s'assurera qu'aucun des deux utilisateurs ne peut partager la même adresse e-mail. */
 const uniqueValidator = require('mongoose-unique-validator');
 
+
 const userSchema = mongoose.Schema({
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
+    email: { type: String,
+             required: [true, 'Veuillez entrer un email'],
+             unique: true,
+             validate: [isEmail, 'Veuillez entrer un email valide'] 
+            },
+
+    password: { type: String,
+                required: [true, 'Veuillez entrer un mot de passe'],
+            }
 });
 
 userSchema.plugin(uniqueValidator);
