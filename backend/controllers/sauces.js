@@ -1,5 +1,6 @@
 const Sauce = require('../models/sauces');
 const fs = require('fs');
+const { exception } = require('console');
 
 exports.createSauce = (req, res, next) => {
     const sauceObject = JSON.parse(req.body.sauce);
@@ -28,38 +29,48 @@ exports.likeAction = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id })
         .then(sauce => {
 
-            if(req.body.like == 1) {
-                // Incrémentation des likes 
-                sauce.likes += 1;
-                // Rajout de l'user dans le tableau 
-                sauce.userLiked.push(req.body.userId);
-            } 
-            
-            if (req.body.like == -1) {
-                // Incrémentation des dislikes
-                sauce.dislikes += 1;
-                // Rajout de l'user dans le tableau 
-                sauce.userDisliked.push(req.body.userId);
-            }
+            if(req.body.like == 1){
+                // Si le user aime, on l'enlève du tableau des userDisliked
+                // (Il ne peut pas liker et disliker en même temps)
+                positionDisliked = sauce.userDisliked.indexOf(req.body.userId);
+                sauce.userDisliked.splice(positionDisliked, 1);
 
-            if (req.body.like == 0) {
-                
-                if (sauce.userLiked.includes(req.body.userId)) {
-                    // Décrémentation des likes
-                    sauce.likes -= 1;
-                    // Suppression de l'user dans le tableau
-                    positionLiked = sauce.userLiked.indexOf(req.body.userId);
-                    sauce.userLiked.splice(positionLiked, 1);
+                if (sauce.userLiked.includes(req.body.userId)){
+                    // console.log('Vous avez déjà liké cette sauce');  
 
-                } else if (sauce.userDisliked.includes(req.body.userId)) {
-                    // Décrémentation des likes
-                    sauce.dislikes -= 1;
-                    // Suppression de l'user dans le tableau
-                    positionDisliked = sauce.userDisliked.indexOf(req.body.userId);
-                    sauce.userDisliked.splice(positionDisliked, 1);
+                } else {
+                // Si il n'est pas dans le tableau, on le rajoute tableau userLiked
+                    sauce.userLiked.push(req.body.userId);
                 }
+
+            } else if (req.body.like == 0) {
+                // Sinon si like = 0, on enlève le userID des deux tableaux
+                positionLiked = sauce.userLiked.indexOf(req.body.userId);
+                sauce.userLiked.splice(positionLiked, 1);
+
+                positionDisliked = sauce.userDisliked.indexOf(req.body.userId);
+                sauce.userDisliked.splice(positionDisliked, 1);
+
+            } else if (req.body.like == -1){
+                // Si le user dislike, on l'enlève du tableau des userLiked
+                // (Il ne peut pas liker et disliker en même temps)
+                positionLiked = sauce.userLiked.indexOf(req.body.userId);
+                sauce.userLiked.splice(positionLiked, 1); 
+
+                if (sauce.userDisliked.includes(req.body.userId)){
+                    // console.log('Vous avez déjà disliké cette sauce'); 
+
+                } else {
+                    // Si il n'est pas dans le tableau, on le rajoute tableau userDisliked
+                    sauce.userDisliked.push(req.body.userId);
+                };
             }
 
+            // Mise à jour du nombre de like et de dislike
+            sauce.likes = sauce.userLiked.length;
+            sauce.dislikes = sauce.userDisliked.length;
+
+            // Mise à jour dans la base de données avec updateOne
             Sauce.updateOne({ _id: req.params.id }, sauce)
             .then(() => res.status(200).json({ message: 'Sauce modifiée !' }))
             .catch(error => res.status(400).json({ error }));
